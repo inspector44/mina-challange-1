@@ -15,7 +15,9 @@ export class SecureDeposit extends SmartContract {
             access: Permissions.proof()
         });
     }
-
+    events = {
+        MessageReceived: UInt32
+    };
 
     init() {
         super.init();
@@ -28,5 +30,16 @@ export class SecureDeposit extends SmartContract {
         this.messageCount.set(UInt32.zero);
     }
 
+    @method store(addressWitness: MerkleMapWitness, address: PublicKey) {
+        AccountUpdate.createSigned(this.sender);
+
+        const adminPublicKey = this.adminPublicKey.getAndRequireEquals();
+        const addressCount = this.addressCount.getAndRequireEquals();
+        const addressesMapRoot = this.addressesMapRoot.getAndRequireEquals();
+        addressCount.assertLessThanOrEqual(UInt32.from(100));
+        adminPublicKey.assertEquals(this.sender);
+
+        
+    }
     
 }

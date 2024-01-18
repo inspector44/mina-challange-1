@@ -39,7 +39,16 @@ export class SecureDeposit extends SmartContract {
         addressCount.assertLessThanOrEqual(UInt32.from(100));
         adminPublicKey.assertEquals(this.sender);
 
+        const hash = Poseidon.hash(address.toFields());
+        const[addMapRoot, addHash] = addressWitness.computeRootAndKey(Bool(false).toField());
+        addHash.equals(hash);
+        addMapRoot.equals(addressesMapRoot);
+        adminPublicKey.equals(this.sender);
         
+        const [nonEmptyMapRoot] = addressWitness.computeRootAndKey(Bool(true).toField());
+
+        this.addressesMapRoot.set(nonEmptyMapRoot);
+        this.addressCount.set(addressCount.add(UInt32.one));
     }
     
 }

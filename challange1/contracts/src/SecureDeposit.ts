@@ -50,5 +50,24 @@ export class SecureDeposit extends SmartContract {
         this.addressesMapRoot.set(nonEmptyMapRoot);
         this.addressCount.set(addressCount.add(UInt32.one));
     }
+
+    @method deposit(addrWitness: MerkleMapWitness, msgWitness: MerkleMapWitness, msg: Field){
+        AccountUpdate.createSigned(this.sender);
+        const msgCount = this.messageCount.getAndRequireEquals();
+        const msgMapRoot = this.messagesMapRoot.getAndRequireEquals();
+        const addrMapRoot = this.addressesMapRoot.getAndRequireEquals();
+
+        const sender = Poseidon.hash(this.sender.toFields());
+
+        // is user eligible?, if not, return
+        const [computedAddrMapRoot, computedAddrHash] = addrWitness.computeRootAndKey(Bool(true).toField());
+        sender.assertEquals(computedAddrHash);
+        addrMapRoot.assertEquals(computedAddrMapRoot);
+
+        // is user deposited message so far, if yes, return
+        const [computedMsgMapRoot, computedMsgHash] = msgWitness.computeRootAndKey(Bool(false).toField());
+        computedMsgHash.assertEquals(sender);
+        computedMsgMapRoot.assertEquals(msgMapRoot);
+    }
     
 }

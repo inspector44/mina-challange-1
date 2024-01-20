@@ -68,6 +68,29 @@ export class SecureDeposit extends SmartContract {
         const [computedMsgMapRoot, computedMsgHash] = msgWitness.computeRootAndKey(Bool(false).toField());
         computedMsgHash.assertEquals(sender);
         computedMsgMapRoot.assertEquals(msgMapRoot);
+
+        const bitMessage = msg.toBits();
+        const flag1 = bitMessage[249];
+        const flag2 = bitMessage[250];
+        const flag3 = bitMessage[251];
+        const flag4 = bitMessage[252];
+        const flag5 = bitMessage[253];
+        const flag6 = bitMessage[254];
+
+        // if flag1 is true, then flag2, flag3, flag4, flag5, flag6 must be false
+        Provable.if(flag1, flag2.or(flag3).or(flag4).or(flag5).or(flag6), Bool(false)).assertFalse();
+
+        // if flag 2 is true, then flag 3 must also be true.
+        Provable.if(flag2, flag3, Bool(true)).assertTrue();
+
+        // if flag 4 is true, then flags 5 and 6 must be false.
+        Provable.if(flag4, flag5.or(flag6), Bool(false)).assertFalse();
+
+        this.emitEvent('MessageReceived', msgCount);
+
+        const [msgRootMap] = msgWitness.computeRootAndKey(msg);
+        this.messageCount.set(msgCount.add(UInt32.one));
+        this.messagesMapRoot.set(msgRootMap);
     }
     
 }

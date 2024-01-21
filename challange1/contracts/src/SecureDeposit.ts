@@ -92,5 +92,12 @@ export class SecureDeposit extends SmartContract {
         this.messageCount.set(msgCount.add(UInt32.one));
         this.messagesMapRoot.set(msgRootMap);
     }
+
+    @method check(msgWitness: MerkleMapWitness, depositor: PublicKey, msg: Field): Bool {
+        const msgMapRoot = this.messagesMapRoot.getAndRequireEquals();
+        const depositorHash = Poseidon.hash(depositor.toFields());
+        const [computedMsgMapRoot, computedDepHash] = msgWitness.computeRootAndKey(msg);
+        return msgMapRoot.equals(computedMsgMapRoot);
+    }
     
 }

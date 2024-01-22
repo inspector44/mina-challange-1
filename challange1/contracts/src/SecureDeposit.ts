@@ -97,7 +97,8 @@ export class SecureDeposit extends SmartContract {
         const msgMapRoot = this.messagesMapRoot.getAndRequireEquals();
         const depositorHash = Poseidon.hash(depositor.toFields());
         const [computedMsgMapRoot, computedDepHash] = msgWitness.computeRootAndKey(msg);
-        return msgMapRoot.equals(computedMsgMapRoot);
+        return msgMapRoot.equals(computedMsgMapRoot)
+            .and(depositorHash.equals(computedDepHash))
     }
     
 }

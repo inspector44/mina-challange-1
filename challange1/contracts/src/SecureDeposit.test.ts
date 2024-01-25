@@ -91,4 +91,187 @@ describe('Challange 1 Tests', () => {
             assert(false, "should've failed")
         } catch { }
     })
+
+    it("eligible address can deposit - user1", async () => {
+        const user1Hash = Poseidon.hash(user1.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[249] = Bool(true)   // 1st flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        console.log(msgBits.length)
+
+        const tx = await Mina.transaction(user1.publicKey, () => {
+            const addressWitness = addressesMap.getWitness(user1Hash)
+            const messageWitness = messagesMap.getWitness(user1Hash)
+            secureDeposit.deposit(addressWitness, messageWitness, msg)
+        })
+        await tx.prove()
+        tx.sign([user1.privateKey])
+        await tx.send()
+
+
+        messagesMap.set(user1Hash, msg)
+
+        const onChainMessagesRoot = secureDeposit.messagesMapRoot.get()
+        const onChainMessagesCount = secureDeposit.messageCount.get()
+        assert.deepEqual(onChainMessagesRoot, messagesMap.getRoot())
+        assert.deepEqual(onChainMessagesCount, UInt32.from(1))
+    })
+
+    it("eligible address can deposit - user2", async () => {
+        const user2Hash = Poseidon.hash(user2.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[250] = Bool(true)   // 2nd flag is true
+        msgBits[251] = Bool(true)   // 3rd flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        const tx = await Mina.transaction(user2.publicKey, () => {
+            const addressWitness = addressesMap.getWitness(user2Hash)
+            const messageWitness = messagesMap.getWitness(user2Hash)
+            secureDeposit.deposit(addressWitness, messageWitness, msg)
+        })
+        await tx.prove()
+        tx.sign([user2.privateKey])
+        await tx.send()
+
+        messagesMap.set(user2Hash, msg)
+
+        const onChainMessagesRoot = secureDeposit.messagesMapRoot.get()
+        const onChainMessagesCount = secureDeposit.messageCount.get()
+        assert.deepEqual(onChainMessagesRoot, messagesMap.getRoot())
+        assert.deepEqual(onChainMessagesCount, UInt32.from(2))
+    })
+
+    it("eligible address can deposit - user3", async () => {
+        const user3Hash = Poseidon.hash(user3.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[252] = Bool(true)   // 4th flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        const tx = await Mina.transaction(user3.publicKey, () => {
+            const addressWitness = addressesMap.getWitness(user3Hash)
+            const messageWitness = messagesMap.getWitness(user3Hash)
+            secureDeposit.deposit(addressWitness, messageWitness, msg)
+        })
+        await tx.prove()
+        tx.sign([user3.privateKey])
+        await tx.send()
+
+        messagesMap.set(user3Hash, msg)
+
+        const onChainMessagesRoot = secureDeposit.messagesMapRoot.get()
+        const onChainMessagesCount = secureDeposit.messageCount.get()
+        assert.deepEqual(onChainMessagesRoot, messagesMap.getRoot())
+        assert.deepEqual(onChainMessagesCount, UInt32.from(3))
+    })
+
+    it("eligible address can't deposit a message if flags are not true", async () => {
+        const user4Hash = Poseidon.hash(user4.publicKey.toFields())
+
+        try {
+            const msgBits = Field.empty().toBits() // all bits are false by default
+            msgBits[249] = Bool(true)   // 1st flag is true
+            msgBits[250] = Bool(true)   // 2nd flag is true (it should have been false)
+            const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+            const tx = await Mina.transaction(user1.publicKey, () => {
+                const addressWitness = addressesMap.getWitness(user4Hash)
+                const messageWitness = messagesMap.getWitness(user4Hash)
+                secureDeposit.deposit(addressWitness, messageWitness, msg)
+            })
+            assert(false, "should've failed")
+        } catch { }
+    })
+
+    it("ineligible address can't deposit", async () => {
+        const user5Hash = Poseidon.hash(user5.publicKey.toFields())
+
+        try {
+            const msgBits = Field.empty().toBits() // all bits are false by default
+            msgBits[249] = Bool(true)   // 1st flag is true
+            const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+            const tx = await Mina.transaction(user2.publicKey, () => {
+                const addressWitness = addressesMap.getWitness(user5Hash)
+                const messageWitness = messagesMap.getWitness(user5Hash)
+                secureDeposit.deposit(addressWitness, messageWitness, msg)
+            })
+            assert(false, "should've failed")
+        } catch { }
+    })
+
+    it("user1 can check message and depositor", async () => {
+        const user1Hash = Poseidon.hash(user1.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[249] = Bool(true)   // 1st flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        const tx = await Mina.transaction(user5.publicKey, () => {
+            const messageWitness = messagesMap.getWitness(user1Hash)
+            const isValid = secureDeposit.check(messageWitness, user1.publicKey, msg)
+            isValid.assertTrue()
+        })
+        await tx.prove()
+        tx.sign([user5.privateKey])
+        await tx.send()
+    })
+
+    it("user2 can check message and depositor", async () => {
+        const user2Hash = Poseidon.hash(user2.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[250] = Bool(true)   // 2nd flag is true
+        msgBits[251] = Bool(true)   // 3rd flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        const tx = await Mina.transaction(user5.publicKey, () => {
+            const messageWitness = messagesMap.getWitness(user2Hash)
+            const isValid = secureDeposit.check(messageWitness, user2.publicKey, msg)
+            isValid.assertTrue()
+        })
+        await tx.prove()
+        tx.sign([user5.privateKey])
+        await tx.send()
+    })
+
+    it("user3 can check message and depositor", async () => {
+        const user3Hash = Poseidon.hash(user3.publicKey.toFields())
+
+        const msgBits = Field.empty().toBits() // all bits are false by default
+        msgBits[252] = Bool(true)   // 4th flag is true
+        const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+        const tx = await Mina.transaction(user5.publicKey, () => {
+            const messageWitness = messagesMap.getWitness(user3Hash)
+            const isValid = secureDeposit.check(messageWitness, user3.publicKey, msg)
+            isValid.assertTrue()
+        })
+        await tx.prove()
+        tx.sign([user5.privateKey])
+        await tx.send()
+    })
+
+    it("user4 can't check message and depositor", async () => {
+        try {
+            const user4Hash = Poseidon.hash(user4.publicKey.toFields())
+
+            const msgBits = Field.empty().toBits() // all bits are false by default
+            msgBits[250] = Bool(true)   // 1st flag is true
+            const msg = Field.fromBits(msgBits) // constructing a message from bits
+
+            const tx = await Mina.transaction(user5.publicKey, () => {
+                const messageWitness = messagesMap.getWitness(user4Hash)
+                const isValid = secureDeposit.check(messageWitness, user4.publicKey, msg)
+                isValid.assertTrue()
+            })
+            await tx.prove()
+            tx.sign([user5.privateKey])
+            await tx.send()
+            assert(false, "should've failed")
+        } catch { }
+    })
 })
